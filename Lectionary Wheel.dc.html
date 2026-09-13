@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Sorts+Mill+Goudy:ital@0;1&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script src="./lectionary-data.js"></script>
+<script src="./sanctuary-stage.js"></script>
+<template id="__bundler_thumbnail" data-bg-color="#0a0812">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#0a0812" />
+    <g transform="translate(600 400)">
+      <circle r="300" fill="none" stroke="#241d33" stroke-width="16" />
+      <circle r="232" fill="none" stroke="#6d4a9c" stroke-width="54" opacity="0.55" />
+      <circle r="232" fill="none" stroke="#3e8a5d" stroke-width="54" opacity="0.55" stroke-dasharray="240 1220" transform="rotate(-96)" />
+      <circle r="232" fill="none" stroke="#dcbd6c" stroke-width="54" opacity="0.6" stroke-dasharray="150 1220" transform="rotate(52)" />
+      <g stroke="#0a0812" stroke-width="7">
+        <line y1="-205" y2="-259" /><line y1="-205" y2="-259" transform="rotate(45)" />
+        <line y1="-205" y2="-259" transform="rotate(90)" /><line y1="-205" y2="-259" transform="rotate(135)" />
+        <line y1="-205" y2="-259" transform="rotate(180)" /><line y1="-205" y2="-259" transform="rotate(225)" />
+        <line y1="-205" y2="-259" transform="rotate(270)" /><line y1="-205" y2="-259" transform="rotate(315)" />
+      </g>
+      <circle r="142" fill="#0a0812" stroke="#c9a55f" stroke-width="3" />
+      <rect x="-9" y="-78" width="18" height="156" fill="#c9a55f" />
+      <rect x="-54" y="-34" width="108" height="18" fill="#c9a55f" />
+    </g>
+  </svg>
+</template>
+<style>
+  html, body { margin: 0; padding: 0; background: #08060e; }
+  a { color: #c9a55f; text-decoration: none; border-bottom: 1px solid rgba(201,165,95,0.35); }
+  a:hover { color: #ecd39a; border-bottom-color: rgba(236,211,154,0.7); }
+  @keyframes rw-breathe { 0%,100% { opacity: 0.55; } 50% { opacity: 0.9; } }
+  @keyframes rw-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; box-sizing: border-box; background: radial-gradient(120% 80% at 22% 8%, rgba(109,74,156,0.20), transparent 62%), radial-gradient(90% 70% at 88% 96%, rgba(201,165,95,0.09), transparent 60%), #08060e; color: #e4dccb; font-family: 'Sorts Mill Goudy', Georgia, serif; padding: clamp(18px, 2.4vw, 38px) clamp(18px, 3vw, 46px) clamp(14px, 2vw, 28px); display: flex; flex-direction: column; gap: clamp(16px, 2.2vh, 30px);">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 22px; border-bottom: 1px solid rgba(201,165,95,0.16); padding-bottom: clamp(12px, 1.6vh, 20px);">
+    <div style="display: flex; flex-direction: column; gap: 7px;">
+      <div style="font-family: Cinzel, serif; font-size: 10.5px; letter-spacing: 0.42em; color: rgba(201,165,95,0.72); text-transform: uppercase;">Roman Rite &middot; Sundays &amp; Solemnities</div>
+      <h1 style="margin: 0; font-family: Cinzel, serif; font-weight: 500; font-size: clamp(26px, 3vw, 40px); letter-spacing: 0.055em; line-height: 1; background: linear-gradient(178deg, #f4e2b4 6%, #c9a55f 58%, #8a6a2e 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #c9a55f;">The Lectionary Wheel</h1>
+      <div style="font-size: 15px; color: rgba(228,220,203,0.55); font-style: italic;">One turn of the wheel, one liturgical year &mdash; read from the ambo.</div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 2px; border: 1px solid rgba(201,165,95,0.28); border-radius: 2px; background: rgba(20,15,30,0.72);">
+        <button onClick="{{ yearBack }}" aria-label="Previous liturgical year" style="width: 38px; height: 38px; border: 0; background: transparent; color: #c9a55f; font-family: Cinzel, serif; font-size: 17px; cursor: pointer; transition: background .18s, color .18s;" style-hover="background: rgba(201,165,95,0.14); color: #f4e2b4;">&#8249;</button>
+        <div style="min-width: 76px; text-align: center; font-family: Cinzel, serif; font-size: 20px; letter-spacing: 0.08em; color: #f0e4c8;">{{ year }}</div>
+        <button onClick="{{ yearFwd }}" aria-label="Next liturgical year" style="width: 38px; height: 38px; border: 0; background: transparent; color: #c9a55f; font-family: Cinzel, serif; font-size: 17px; cursor: pointer; transition: background .18s, color .18s;" style-hover="background: rgba(201,165,95,0.14); color: #f4e2b4;">&#8250;</button>
+      </div>
+
+      <div style="font-family: Cinzel, serif; font-size: 11px; letter-spacing: 0.24em; padding: 11px 15px; border: 1px solid rgba(201,165,95,0.4); border-radius: 2px; color: #f0e4c8; background: rgba(201,165,95,0.09);">{{ cycleBadge }}</div>
+
+      <button onClick="{{ toggleOverlay }}" style="font-family: Cinzel, serif; font-size: 11px; letter-spacing: 0.2em; padding: 12px 16px; border-radius: 2px; cursor: pointer; transition: all .2s; white-space: nowrap; border: 1px solid {{ overlayBorder }}; color: {{ overlayColor }}; background: {{ overlayBg }};">A &middot; B &middot; C</button>
+
+      <button onClick="{{ goToday }}" style="font-family: Cinzel, serif; font-size: 11px; letter-spacing: 0.2em; padding: 12px 16px; border: 1px solid rgba(201,165,95,0.22); border-radius: 2px; background: transparent; color: rgba(228,220,203,0.7); cursor: pointer; transition: all .2s;" style-hover="border-color: rgba(201,165,95,0.55); color: #f0e4c8;">TODAY</button>
+    </div>
+  </header>
+
+  <main style="flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: clamp(20px, 3vw, 54px); align-items: center;">
+
+    <section style="display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 0;">
+      <div style="position: relative; width: min(100%, 600px); aspect-ratio: 1 / 1;">
+        <div style="position: absolute; inset: -14%; border-radius: 50%; background: radial-gradient(circle at 50% 42%, {{ glowColor }}, transparent 58%); filter: blur(46px); opacity: {{ glowOpacity }}; pointer-events: none;"></div>
+        <div style="position: absolute; inset: -6%; border-radius: 50%; background: radial-gradient(circle at 50% 46%, rgba(201,165,95,0.16), transparent 52%); filter: blur(30px); animation: rw-breathe 9s ease-in-out infinite; pointer-events: none;"></div>
+
+        <svg viewBox="-400 -400 800 800" style="position: relative; width: 100%; height: 100%; overflow: visible;">
+          <defs>
+            <radialGradient id="rwViolet" gradientUnits="userSpaceOnUse" cx="-60" cy="-150" r="480">
+              <stop offset="0%" stop-color="#b48ce8" /><stop offset="48%" stop-color="#6d4a9c" /><stop offset="100%" stop-color="#33204f" />
+            </radialGradient>
+            <radialGradient id="rwWhite" gradientUnits="userSpaceOnUse" cx="-60" cy="-150" r="480">
+              <stop offset="0%" stop-color="#fbeec4" /><stop offset="48%" stop-color="#dcbd6c" /><stop offset="100%" stop-color="#8a6a2e" />
+            </radialGradient>
+            <radialGradient id="rwGreen" gradientUnits="userSpaceOnUse" cx="-60" cy="-150" r="480">
+              <stop offset="0%" stop-color="#6fc294" /><stop offset="48%" stop-color="#3e8a5d" /><stop offset="100%" stop-color="#1c4630" />
+            </radialGradient>
+            <radialGradient id="rwRed" gradientUnits="userSpaceOnUse" cx="-60" cy="-150" r="480">
+              <stop offset="0%" stop-color="#e07a72" /><stop offset="48%" stop-color="#a93c3c" /><stop offset="100%" stop-color="#571d20" />
+            </radialGradient>
+            <radialGradient id="rwRose" gradientUnits="userSpaceOnUse" cx="-60" cy="-150" r="480">
+              <stop offset="0%" stop-color="#f2bcd0" /><stop offset="48%" stop-color="#cf87a4" /><stop offset="100%" stop-color="#7a4256" />
+            </radialGradient>
+            <radialGradient id="rwCore" gradientUnits="userSpaceOnUse" cx="0" cy="-40" r="150">
+              <stop offset="0%" stop-color="#221a33" /><stop offset="100%" stop-color="#0a0812" />
+            </radialGradient>
+            <linearGradient id="rwStone" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3d3350" /><stop offset="52%" stop-color="#241d33" /><stop offset="100%" stop-color="#14101d" />
+            </linearGradient>
+          </defs>
+
+          <circle r="392" fill="none" stroke="url(#rwStone)" stroke-width="19" />
+          <circle r="378" fill="none" stroke="#0b0812" stroke-width="4" />
+          <circle r="302" fill="none" stroke="url(#rwStone)" stroke-width="7" />
+          <circle r="212" fill="none" stroke="url(#rwStone)" stroke-width="7" />
+
+          <g>
+            <sc-for list="{{ petals }}" as="p" hint-placeholder-count="12">
+              <g transform="rotate({{ p.rot }})">
+                <circle cy="-340" r="35" fill="{{ p.fill }}" opacity="0.62" stroke="#0b0812" stroke-width="3.5" />
+                <circle cy="-340" r="35" fill="none" stroke="rgba(201,165,95,0.18)" stroke-width="1" />
+                <circle cy="-352" r="12" fill="rgba(255,255,255,0.10)" />
+              </g>
+            </sc-for>
+          </g>
+
+          <g>
+            <sc-for list="{{ mullions }}" as="m" hint-placeholder-count="12">
+              <g transform="rotate({{ m.rot }})">
+                <line x1="0" y1="-215" x2="0" y2="-375" stroke="#171223" stroke-width="6" />
+                <line x1="0" y1="-138" x2="0" y2="-208" stroke="rgba(201,165,95,0.12)" stroke-width="1.2" />
+              </g>
+            </sc-for>
+          </g>
+
+          <g>
+            <sc-for list="{{ seasons }}" as="s" hint-placeholder-count="7">
+              <path d="{{ s.d }}" fill="{{ s.fill }}" stroke="#0b0812" stroke-width="2.5" />
+            </sc-for>
+          </g>
+
+          <g>
+            <sc-for list="{{ panels }}" as="q" hint-placeholder-count="0">
+              <line x1="0" y1="-216" x2="0" y2="-298" stroke="rgba(9,6,15,0.5)" stroke-width="1.5" transform="rotate({{ q.rot }})" />
+            </sc-for>
+          </g>
+          <circle r="230" fill="none" stroke="rgba(255,255,255,0.055)" stroke-width="28" />
+
+          <g>
+            <sc-for list="{{ rings }}" as="r" hint-placeholder-count="1">
+              <circle r="{{ r.r }}" fill="none" stroke="rgba(201,165,95,0.13)" stroke-width="1" />
+            </sc-for>
+          </g>
+
+          <sc-if value="{{ showToday }}" hint-placeholder-val="{{ false }}">
+            <g transform="rotate({{ todayRot }})">
+              <line x1="0" y1="-136" x2="0" y2="-300" stroke="rgba(244,226,180,0.55)" stroke-width="1.6" />
+              <circle cy="-300" r="4.5" fill="#f4e2b4" />
+            </g>
+          </sc-if>
+
+          <g>
+            <sc-for list="{{ markers }}" as="m" hint-placeholder-count="0">
+              <g transform="translate({{ m.x }} {{ m.y }})">
+                <circle r="{{ m.halo }}" fill="none" stroke="rgba(244,226,180,0.85)" stroke-width="1.3" />
+                <circle r="{{ m.r }}" fill="{{ m.fill }}" stroke="{{ m.stroke }}" stroke-width="{{ m.sw }}" onClick="{{ m.click }}" onMouseEnter="{{ m.enter }}" onMouseLeave="{{ m.leave }}" style="cursor: pointer; transition: transform .18s ease;" style-hover="transform: scale(1.9);" />
+              </g>
+            </sc-for>
+          </g>
+
+          <circle r="132" fill="url(#rwCore)" stroke="rgba(201,165,95,0.45)" stroke-width="1.6" />
+          <circle r="120" fill="none" stroke="rgba(201,165,95,0.16)" stroke-width="1" />
+        </svg>
+
+        <div style="position: absolute; inset: 0; pointer-events: none;">
+          <sc-for list="{{ petals }}" as="p" hint-placeholder-count="12">
+            <div style="position: absolute; left: {{ p.left }}%; top: {{ p.top }}%; transform: translate(-50%, -50%); font-family: Cinzel, serif; font-size: clamp(9px, 1.5vw, 14px); letter-spacing: 0.16em; color: rgba(243,234,214,0.88); text-shadow: 0 1px 4px rgba(0,0,0,0.7);">{{ p.label }}</div>
+          </sc-for>
+          <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
+            <div style="font-family: Cinzel, serif; font-size: clamp(8px, 1.1vw, 11px); letter-spacing: 0.44em; color: rgba(201,165,95,0.7);">ANNO</div>
+            <div style="font-family: Cinzel, serif; font-size: clamp(34px, 6vw, 58px); line-height: 1; letter-spacing: 0.04em; color: #f0e4c8;">{{ year }}</div>
+            <div style="font-family: Cinzel, serif; font-size: clamp(8px, 1.1vw, 11px); letter-spacing: 0.3em; color: rgba(228,220,203,0.6);">{{ centerCycle }}</div>
+            <div style="font-family: 'Sorts Mill Goudy', Georgia, serif; font-style: italic; font-size: clamp(13px, 1.9vw, 18px); color: rgba(201,165,95,0.72); margin-top: 4px;">{{ centerSeason }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div ref="{{ setTip }}" style="min-height: 22px; text-align: center; font-family: Cinzel, serif; font-size: 11px; letter-spacing: 0.2em; color: rgba(228,220,203,0.62); text-transform: uppercase;"></div>
+
+      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px;">
+        <li style="display: flex; align-items: center; gap: 7px; font-family: Cinzel, serif; font-size: 10px; letter-spacing: 0.16em; color: rgba(228,220,203,0.5);"><span style="width: 9px; height: 9px; border-radius: 50%; background: #6d4a9c;"></span>ADVENT &amp; LENT</li>
+        <li style="display: flex; align-items: center; gap: 7px; font-family: Cinzel, serif; font-size: 10px; letter-spacing: 0.16em; color: rgba(228,220,203,0.5);"><span style="width: 9px; height: 9px; border-radius: 50%; background: #dcbd6c;"></span>CHRISTMAS &amp; EASTER</li>
+        <li style="display: flex; align-items: center; gap: 7px; font-family: Cinzel, serif; font-size: 10px; letter-spacing: 0.16em; color: rgba(228,220,203,0.5);"><span style="width: 9px; height: 9px; border-radius: 50%; background: #3e8a5d;"></span>ORDINARY TIME</li>
+        <li style="display: flex; align-items: center; gap: 7px; font-family: Cinzel, serif; font-size: 10px; letter-spacing: 0.16em; color: rgba(228,220,203,0.5);"><span style="width: 9px; height: 9px; border-radius: 50%; background: #a93c3c;"></span>TRIDUUM &amp; PENTECOST</li>
+        <li style="display: flex; align-items: center; gap: 7px; font-family: Cinzel, serif; font-size: 10px; letter-spacing: 0.16em; color: rgba(228,220,203,0.5);"><span style="width: 9px; height: 9px; border-radius: 50%; background: #cf87a4;"></span>GAUDETE &amp; LAETARE</li>
+      </ul>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="position: relative; height: clamp(380px, 58vh, 660px); border: 1px solid rgba(201,165,95,0.18); border-radius: 44% 44% 3px 3px / 20% 20% 3px 3px; background: #0a0812; overflow: hidden; box-shadow: 0 46px 90px rgba(0,0,0,0.62);">
+        <x-import component-from-global-scope="sanctuary-stage" hint-size="100%,100%" style="position: absolute; inset: 0; display: block;"></x-import>
+        <div style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(64% 46% at 50% -6%, {{ glowColor }}, transparent 72%); mix-blend-mode: screen;"></div>
+        <div style="position: absolute; left: 14px; bottom: 12px; display: flex; align-items: center; gap: 8px;">
+          <span style="font-family: Cinzel, serif; font-size: 9.5px; letter-spacing: 0.26em; color: #d9b878; pointer-events: none; white-space: nowrap; padding: 6px 11px; border: 1px solid rgba(201,165,95,0.22); border-radius: 2px; background: rgba(10,8,18,0.82);">DRAG TO LOOK &middot; SCROLL TO ZOOM</span>
+          <button onClick="{{ resetView }}" style="font-family: Cinzel, serif; font-size: 9px; letter-spacing: 0.22em; padding: 6px 10px; border: 1px solid rgba(201,165,95,0.3); border-radius: 2px; background: rgba(10,8,18,0.72); color: rgba(201,165,95,0.8); cursor: pointer; white-space: nowrap; transition: all .2s;" style-hover="border-color: rgba(201,165,95,0.65); color: #f4e2b4;">RESET VIEW</button>
+        </div>
+        <sc-if value="{{ failed }}" hint-placeholder-val="{{ false }}">
+          <div style="position: absolute; inset: 0; padding: 34px; background: #0b0813; overflow: auto;">
+            <div style="font-family: Cinzel, serif; font-size: 10px; letter-spacing: 0.3em; color: rgba(201,165,95,0.6);">READING &mdash; TEXT ONLY</div>
+            <div style="font-size: 27px; margin: 14px 0 4px; color: #f0e4c8;">{{ openName }}</div>
+            <div style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.14em; color: rgba(228,220,203,0.6);">{{ openDate }}</div>
+            <dl style="margin: 22px 0 0; display: grid; gap: 14px;">
+              <sc-for list="{{ fallbackItems }}" as="f" hint-placeholder-count="4">
+                <div>
+                  <dt style="font-family: Cinzel, serif; font-size: 10px; letter-spacing: 0.24em; color: rgba(201,165,95,0.8);">{{ f.label }}</dt>
+                  <dd style="margin: 5px 0 0; font-size: 20px; color: #e4dccb;">{{ f.text }}</dd>
+                </div>
+              </sc-for>
+            </dl>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;">
+        <div style="min-width: 0; flex: 1;">
+          <div style="font-family: Cinzel, serif; font-size: 9.5px; letter-spacing: 0.3em; color: rgba(201,165,95,0.6);">{{ openKicker }}</div>
+          <div style="font-size: clamp(19px, 2vw, 26px); line-height: 1.18; color: #f0e4c8; margin-top: 5px; text-wrap: pretty;">{{ openName }}</div>
+          <div style="font-family: Cinzel, serif; font-size: 11px; letter-spacing: 0.14em; color: rgba(228,220,203,0.55); margin-top: 6px;">{{ openMeta }}</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button onClick="{{ prev }}" aria-label="Previous page" style="width: 46px; height: 46px; border: 1px solid rgba(201,165,95,0.3); border-radius: 50%; background: rgba(20,15,30,0.7); color: #c9a55f; font-family: Cinzel, serif; font-size: 17px; cursor: pointer; transition: all .2s;" style-hover="background: rgba(201,165,95,0.16); color: #f4e2b4;">&#8249;</button>
+          <button onClick="{{ restart }}" aria-label="Back to the first Sunday of Advent" style="width: 40px; height: 40px; border: 1px solid rgba(201,165,95,0.2); border-radius: 50%; background: transparent; color: rgba(201,165,95,0.75); font-size: 15px; cursor: pointer; transition: all .2s;" style-hover="border-color: rgba(201,165,95,0.55); color: #f4e2b4;">&#8635;</button>
+          <button onClick="{{ next }}" aria-label="Next page" style="width: 46px; height: 46px; border: 1px solid rgba(201,165,95,0.3); border-radius: 50%; background: rgba(20,15,30,0.7); color: #c9a55f; font-family: Cinzel, serif; font-size: 17px; cursor: pointer; transition: all .2s;" style-hover="background: rgba(201,165,95,0.16); color: #f4e2b4;">&#8250;</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer style="border-top: 1px solid rgba(201,165,95,0.12); padding-top: 12px; display: flex; flex-wrap: wrap; gap: 8px 26px; justify-content: space-between; font-size: 13px; color: rgba(228,220,203,0.42);">
+    <div>Dates computed live from Easter (Meeus / Jones / Butcher). Citations follow the general structure of the Roman Lectionary &mdash; cross-check at <a href="https://bible.usccb.org/readings" target="_blank" rel="noopener">bible.usccb.org</a>.</div>
+    <div style="font-family: Cinzel, serif; font-size: 10px; letter-spacing: 0.24em; white-space: nowrap;">CLICK THE GLASS &middot; TURN THE PAGE</div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;sceneMood&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;Candlelight&quot;, &quot;Vespers&quot;, &quot;Feast Day&quot;], &quot;default&quot;: &quot;Candlelight&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Sanctuary&quot; },
+  &quot;glowStrength&quot;: { &quot;editor&quot;: &quot;range&quot;, &quot;min&quot;: 0, &quot;max&quot;: 1.4, &quot;step&quot;: 0.05, &quot;default&quot;: 0.85, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Rose window&quot; },
+  &quot;showToday&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Rose window&quot; }
+}">
+const LIT_HEX = { violet: "#6d4a9c", white: "#dcbd6c", green: "#3e8a5d", red: "#a93c3c", rose: "#cf87a4" };
+const GRAD = { violet: "url(#rwViolet)", white: "url(#rwWhite)", green: "url(#rwGreen)", red: "url(#rwRed)", rose: "url(#rwRose)" };
+const RING = { single: 190, A: 152, B: 176, C: 200 };
+
+function polar(r, a) { return [+(r * Math.sin(a)).toFixed(2), +(-r * Math.cos(a)).toFixed(2)]; }
+
+function annulus(a0, a1, r0, r1) {
+  const large = a1 - a0 > Math.PI ? 1 : 0;
+  const p0 = polar(r1, a0), p1 = polar(r1, a1), p2 = polar(r0, a1), p3 = polar(r0, a0);
+  return `M${p0[0]} ${p0[1]}A${r1} ${r1} 0 ${large} 1 ${p1[0]} ${p1[1]}L${p2[0]} ${p2[1]}A${r0} ${r0} 0 ${large} 0 ${p3[0]} ${p3[1]}Z`;
+}
+
+class Component extends DCLogic {
+  state = { year: null, mode: "single", cycle: null, day: -1, spread: -1, failed: false, tick: 0 };
+
+  componentDidMount() {
+    this.onReady = (e) => {
+      this.stage = e.detail && e.detail.stage ? e.detail.stage : e.target;
+      this.stage.setMood(this.props.sceneMood || "Candlelight");
+      this.push(true);
+    };
+    this.onSpread = (e) => {
+      const d = e.detail;
+      this.setState({ spread: d.spread, day: d.day });
+      const slot = this.slots && d.day >= 0 ? this.slots[d.day] : null;
+      if (this.stage && slot) this.stage.setAccent(LIT_HEX[slot.color] || "#6d4a9c");
+    };
+    this.onFail = () => this.setState({ failed: true });
+    this.onKey = (e) => {
+      if (e.target && /input|textarea|select/i.test(e.target.tagName || "")) return;
+      if (e.key === "ArrowRight") { this.turn(1); e.preventDefault(); }
+      if (e.key === "ArrowLeft") { this.turn(-1); e.preventDefault(); }
+    };
+    document.addEventListener("stage-ready", this.onReady);
+    document.addEventListener("spread-change", this.onSpread);
+    document.addEventListener("stage-failed", this.onFail);
+    window.addEventListener("keydown", this.onKey);
+    this.waitForData(0);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("stage-ready", this.onReady);
+    document.removeEventListener("spread-change", this.onSpread);
+    document.removeEventListener("stage-failed", this.onFail);
+    window.removeEventListener("keydown", this.onKey);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.stage && prevProps.sceneMood !== this.props.sceneMood) {
+      this.stage.setMood(this.props.sceneMood || "Candlelight");
+    }
+    this.paintTip();
+  }
+
+  waitForData(n) {
+    // The stage may finish building before this listener exists, so adopt any
+    // element already in the DOM rather than relying on the event alone.
+    if (!this.stage) {
+      const el = document.querySelector("sanctuary-stage");
+      if (el && el._renderer) {
+        this.stage = el;
+        el.setMood(this.props.sceneMood || "Candlelight");
+      }
+    }
+    if (window.LectionaryModule && this.stage) {
+      this.mod = window.LectionaryModule;
+      this.build(this.thisYear());
+      return;
+    }
+    if (n > 250) {
+      if (window.LectionaryModule && !this.mod) { this.mod = window.LectionaryModule; this.build(this.thisYear()); }
+      return;
+    }
+    setTimeout(() => this.waitForData(n + 1), 60);
+  }
+
+  thisYear() {
+    const LC = this.mod.LiturgicalCalendar, today = new Date();
+    const y = today.getUTCFullYear();
+    return today >= LC.sundayNearest(LC.utcDate(y, 11, 30)) ? y + 1 : y;
+  }
+
+  build(year, cycle) {
+    const m = this.mod;
+    const built = m.buildSlots(year);
+    this.ly = built.liturgicalYear;
+    this.slots = built.slots;
+    const c = cycle || this.ly.cycle;
+    this.pages = m.buildPages(this.slots, c, this.ly);
+    this.setState({ year: year, cycle: c, day: -1, spread: -1 });
+    this.push(true);
+  }
+
+  push(reset) {
+    if (!this.stage || !this.pages) return;
+    if (reset) this.stage.setPages(this.pages);
+    this.stage.setAccent(LIT_HEX[this.currentColor()] || "#6d4a9c");
+  }
+
+  currentColor() {
+    const s = this.slots && this.state.day >= 0 ? this.slots[this.state.day] : null;
+    return s ? s.color : "violet";
+  }
+
+  turn(dir) { if (this.stage) this.stage.turn(dir); }
+
+  jump(dayIndex, cycle) {
+    if (cycle && cycle !== this.state.cycle) {
+      this.pages = this.mod.buildPages(this.slots, cycle, this.ly);
+      this.setState({ cycle: cycle });
+      if (this.stage) this.stage.setPages(this.pages);
+    }
+    if (this.stage) this.stage.goTo(dayIndex * 2);
+  }
+
+  setTip = (el) => { this.tipEl = el; this.paintTip(); };
+
+  defaultTip() {
+    if (this.state.day >= 0 && this.slots) return "LEAF THROUGH \u2039 \u203A  OR CLICK ANY JEWEL";
+    return "CLICK A JEWEL IN THE GLASS TO OPEN THE BOOK";
+  }
+
+  paintTip() { if (this.tipEl) this.tipEl.textContent = this.defaultTip(); }
+
+  hoverTip(slot, cycle) {
+    if (!this.tipEl) return;
+    const LC = this.mod.LiturgicalCalendar;
+    const tag = this.state.mode === "overlay" ? "  \u00B7  YEAR " + cycle : "";
+    this.tipEl.textContent = (slot.name + "  \u00B7  " + LC.formatDate(slot.date) + tag).toUpperCase();
+  }
+
+  renderVals() {
+    const st = this.state;
+    const ready = !!(this.mod && this.ly);
+    const LC = ready ? this.mod.LiturgicalCalendar : null;
+    const ly = this.ly;
+    const accent = LIT_HEX[this.currentColor()] || "#6d4a9c";
+    const glow = this.props.glowStrength == null ? 0.85 : this.props.glowStrength;
+
+    const out = {
+      year: st.year || "",
+      cycleBadge: st.mode === "overlay" ? "OVERLAY A \u00B7 B \u00B7 C" : "CYCLE " + (st.cycle || ""),
+      centerCycle: "SUNDAY CYCLE " + (st.cycle || ""),
+      glowColor: accent + "66",
+      glowOpacity: glow,
+      overlayBorder: st.mode === "overlay" ? "rgba(201,165,95,0.6)" : "rgba(201,165,95,0.22)",
+      overlayColor: st.mode === "overlay" ? "#f4e2b4" : "rgba(228,220,203,0.7)",
+      overlayBg: st.mode === "overlay" ? "rgba(201,165,95,0.16)" : "transparent",
+      failed: st.failed,
+      setTip: this.setTip,
+      prev: () => this.turn(-1),
+      next: () => this.turn(1),
+      restart: () => { if (this.stage) this.stage.goTo(0); },
+      resetView: () => { if (this.stage) this.stage.resetView(); },
+      yearBack: () => ready && this.build(st.year - 1),
+      yearFwd: () => ready && this.build(st.year + 1),
+      goToday: () => { if (!ready) return; const y = this.thisYear(); if (y !== st.year) this.build(y); this.jumpToToday(); },
+      toggleOverlay: () => this.setState({ mode: st.mode === "overlay" ? "single" : "overlay" }),
+      seasons: [], petals: [], mullions: [], markers: [], rings: [], panels: [],
+      showToday: false, todayRot: 0,
+      openKicker: "THE BOOK IS CLOSED",
+      openName: ready ? "The Lectionary" : "",
+      openDate: "",
+      openMeta: "Turn \u203A to open at the First Sunday of Advent",
+      centerSeason: "",
+      fallbackItems: []
+    };
+    if (!ready) return out;
+
+    const frac = (d) => LC.fractionOfYear(d, ly);
+    const ang = (d) => frac(d) * 2 * Math.PI;
+
+    out.seasons = ly.seasons.map((s) => ({
+      d: annulus(ang(s.start), ang(LC.addDays(s.end, 1)), 215, 299),
+      fill: GRAD[s.color] || GRAD.green
+    }));
+
+    const ticks = [];
+    let cur = new Date(Date.UTC(ly.dates.advent1.getUTCFullYear(), ly.dates.advent1.getUTCMonth() + 1, 1));
+    while (cur < ly.dates.nextAdvent1) {
+      ticks.push(cur);
+      cur = new Date(Date.UTC(cur.getUTCFullYear(), cur.getUTCMonth() + 1, 1));
+    }
+    out.mullions = ticks.map((t) => ({ rot: +(frac(t) * 360).toFixed(2) }));
+    out.petals = ticks.map((t, i) => {
+      const next = i + 1 < ticks.length ? ticks[i + 1] : ly.dates.nextAdvent1;
+      const mid = (frac(t) + frac(next)) / 2;
+      const season = ly.seasons.find((s) => {
+        const c = new Date((t.getTime() + next.getTime()) / 2);
+        return c >= s.start && c <= s.end;
+      });
+      const rot = +(mid * 360).toFixed(2);
+      const lp = polar(340, mid * 2 * Math.PI);
+      return {
+        rot: rot, counter: -rot,
+        left: +((lp[0] + 400) / 8).toFixed(2), top: +((lp[1] + 400) / 8).toFixed(2),
+        label: t.toLocaleDateString("en-US", { timeZone: "UTC", month: "short" }).toUpperCase(),
+        fill: GRAD[season ? season.color : "green"]
+      };
+    });
+
+    out.panels = this.slots.map((s) => ({ rot: +(frac(s.date) * 360).toFixed(2) }));
+
+    const cycles = st.mode === "overlay" ? ["A", "B", "C"] : [st.cycle];
+    out.rings = cycles.map((c) => ({ r: st.mode === "overlay" ? RING[c] : RING.single }));
+
+    const markers = [];
+    cycles.forEach((cy) => {
+      const radius = st.mode === "overlay" ? RING[cy] : RING.single;
+      this.slots.forEach((slot, idx) => {
+        if (!this.mod.readingsForCycle(slot, cy)) return;
+        const p = polar(radius, ang(slot.date));
+        const sel = idx === st.day && (st.mode !== "overlay" || cy === st.cycle);
+        const big = !!slot.rank;
+        markers.push({
+          x: p[0], y: p[1],
+          r: big ? 8 : 5.2,
+          halo: sel ? (big ? 14 : 11) : 0,
+          fill: LIT_HEX[slot.color] || "#3e8a5d",
+          stroke: sel ? "#f4e2b4" : big ? "rgba(244,226,180,0.6)" : "rgba(11,8,18,0.7)",
+          sw: sel ? 2 : 1.2,
+          click: () => this.jump(idx, cy),
+          enter: () => this.hoverTip(slot, cy),
+          leave: () => this.paintTip()
+        });
+      });
+    });
+    out.markers = markers;
+
+    const now = new Date();
+    const nowUTC = LC.utcDate(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate());
+    const f = frac(nowUTC);
+    out.showToday = this.props.showToday !== false && f >= 0 && f < 1;
+    out.todayRot = +(f * 360).toFixed(2);
+
+    const slot = st.day >= 0 ? this.slots[st.day] : null;
+    out.centerSeason = slot ? this.mod.seasonOf(slot.date, ly) : this.mod.seasonOf(nowUTC, ly);
+    if (slot) {
+      const spreadInDay = st.spread - st.day * 2;
+      out.openKicker = (this.mod.seasonOf(slot.date, ly) + " \u00B7 " + (spreadInDay <= 0 ? "TITLE & FIRST READING" : "SECOND READING & GOSPEL")).toUpperCase();
+      out.openName = slot.name;
+      out.openDate = LC.formatDate(slot.date);
+      out.openMeta = [LC.formatDate(slot.date), "Cycle " + st.cycle, this.mod.COLOR_LABEL[slot.color] || slot.color, slot.rank]
+        .filter(Boolean).join("  \u00B7  ");
+      const r = this.mod.readingsForCycle(slot, st.cycle) || {};
+      out.fallbackItems = [
+        { label: "FIRST READING", text: this.mod.readingText(r.first, st.cycle) },
+        { label: "RESPONSORIAL PSALM", text: this.mod.readingText(r.psalm, st.cycle) },
+        { label: "SECOND READING", text: this.mod.readingText(r.second, st.cycle) },
+        { label: "GOSPEL", text: this.mod.readingText(r.gospel, st.cycle) }
+      ];
+    }
+    return out;
+  }
+
+  jumpToToday() {
+    if (!this.slots) return;
+    const LC = this.mod.LiturgicalCalendar, now = new Date();
+    const t = LC.utcDate(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate()).getTime();
+    let best = 0, bestD = Infinity;
+    this.slots.forEach((s, i) => {
+      const d = Math.abs(s.date.getTime() - t);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    setTimeout(() => this.jump(best), 60);
+  }
+}
+
+</script>
+</body>
+</html>
